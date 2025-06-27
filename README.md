@@ -29,7 +29,10 @@ _  / __ __  /_______  / / /_____ \__  / / /_  /_/ /
 
 ## 🖼️ صورة من البرنامج
 
-![واجهة البرنامج](image1)
+![image](https://github.com/user-attachments/assets/155c18ab-0cfe-4e5f-886c-80bbe4caf2da)
+
+![image](https://github.com/user-attachments/assets/8cba7850-b8c7-457d-aa93-b62ee664a9f7)
+
 
 ---
 
@@ -76,7 +79,8 @@ _  / __ __  /_______  / / /_____ \__  / / /_  /_/ /
 
 ## 🖼️ Screenshot
 
-![Program Interface](image1)
+![image](https://github.com/user-attachments/assets/e410ebbd-eb4f-40e0-bff5-d01c0c929cd2)
+![image](https://github.com/user-attachments/assets/b53c516b-ba0b-4e57-af74-763825775ed8)
 
 ---
 
