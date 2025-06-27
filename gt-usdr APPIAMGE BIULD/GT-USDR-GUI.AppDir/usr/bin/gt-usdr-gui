@@ -1,0 +1,279 @@
+#!/bin/bash
+
+# GT-USDR: أداة رسومية متقدمة لفحص، إصلاح، تهيئة، وإنقاذ مفاتيح وأقراص USB/SD الخارجية
+APP_NAME="GT-USDR"
+VERSION="0.1"
+AUTHOR="GNUTUX"
+REPO_URL="https://github.com/SalehGNUTUX/gt-usdr"
+LICENSE="GPLv2"
+
+LANG_CODE="ar"
+
+choose_language() {
+    choice=$(zenity --list --title="Language / اللغة" --column="اللغة / Language" "العربية" "English" --width=300 --height=180)
+    if [[ "$choice" == "العربية" ]]; then
+        LANG_CODE="ar"
+    elif [[ "$choice" == "English" ]]; then
+        LANG_CODE="en"
+    fi
+}
+
+msg() {
+    case "$1" in
+        app_title) [[ "$LANG_CODE" == "ar" ]] && echo "$APP_NAME $VERSION" || echo "$APP_NAME $VERSION" ;;
+        missing_tools) [[ "$LANG_CODE" == "ar" ]] && echo "الأدوات الناقصة: $2\nيجب تثبيتها أولاً." || echo "Missing tools: $2\nPlease install them first." ;;
+        device_info) [[ "$LANG_CODE" == "ar" ]] && echo "معلومات الأجهزة الخارجية" || echo "External Device Information" ;;
+        no_ext_devs) [[ "$LANG_CODE" == "ar" ]] && echo "لا توجد أجهزة ذاكرة خارجية متصلة." || echo "No external storage devices detected." ;;
+        no_ext_parts) [[ "$LANG_CODE" == "ar" ]] && echo "لا توجد أقسام متاحة." || echo "No partitions available." ;;
+        choose_disk) [[ "$LANG_CODE" == "ar" ]] && echo "اختيار جهاز خارجي" || echo "Select External Device" ;;
+        choose_target) [[ "$LANG_CODE" == "ar" ]] && echo "اختر القسم أو الجهاز بالكامل" || echo "Choose Partition or Whole Device" ;;
+        choose_part) [[ "$LANG_CODE" == "ar" ]] && echo "اختيار القسم" || echo "Select Partition" ;;
+        choose_full_format) [[ "$LANG_CODE" == "ar" ]] && echo "اختر تهيئة الجهاز بالكامل أو قسم واحد" || echo "Format the whole device or a single partition" ;;
+        partitions_col) [[ "$LANG_CODE" == "ar" ]] && echo "الأقسام" || echo "Partitions" ;;
+        devices_col) [[ "$LANG_CODE" == "ar" ]] && echo "الأجهزة" || echo "Devices" ;;
+        targets_col) [[ "$LANG_CODE" == "ar" ]] && echo "الأهداف" || echo "Targets" ;;
+        fsck_result) [[ "$LANG_CODE" == "ar" ]] && echo "نتيجة الفحص" || echo "Check Result" ;;
+        repair_result) [[ "$LANG_CODE" == "ar" ]] && echo "نتيجة الإصلاح" || echo "Repair Result" ;;
+        format_result) [[ "$LANG_CODE" == "ar" ]] && echo "نتيجة التهيئة" || echo "Format Result" ;;
+        smart_result) [[ "$LANG_CODE" == "ar" ]] && echo "نتيجة فحص الصحة (SMART)" || echo "SMART Health Result" ;;
+        confirm_repair) [[ "$LANG_CODE" == "ar" ]] && echo "سيتم إصلاح $2 باستخدام fsck.\nتأكد أنه غير مركب.\nهل تريد المتابعة؟" || echo "Repair $2 with fsck.\nMake sure it's not mounted.\nContinue?" ;;
+        confirm_format) [[ "$LANG_CODE" == "ar" ]] && echo "سيتم حذف جميع البيانات على $2!\nهل تريد المتابعة؟" || echo "All data on $2 will be lost!\nContinue?" ;;
+        confirm_full_format) [[ "$LANG_CODE" == "ar" ]] && echo "تنبيه: ستتم تهيئة الجهاز بالكامل ($2) وسيتم حذف جميع الأقسام والبيانات!\nهل تريد المتابعة؟" || echo "Warning: The whole device $2 will be formatted and ALL partitions and data will be erased!\nContinue?" ;;
+        smart_choose_type) [[ "$LANG_CODE" == "ar" ]] && echo "لم يتعرف smartctl على نوع الجهاز الخارجي.\nاختر نوع الواجهة لمحاولة فحص SMART:" || echo "smartctl could not detect the device type.\nSelect interface type to try SMART check:" ;;
+        smart_try_again) [[ "$LANG_CODE" == "ar" ]] && echo "لم تنجح المحاولة مع النوع ($2).\nهل تريد تجربة نوع آخر؟" || echo "Attempt with ($2) failed.\nTry another type?" ;;
+        choose_check_mode) [[ "$LANG_CODE" == "ar" ]] && echo "اختيار نمط الفحص" || echo "Choose Check Mode" ;;
+        choose_repair_mode) [[ "$LANG_CODE" == "ar" ]] && echo "اختيار نمط الإصلاح" || echo "Choose Repair Mode" ;;
+        choose_fs_type) [[ "$LANG_CODE" == "ar" ]] && echo "اختيار نظام الملفات" || echo "Choose Filesystem Type" ;;
+        entry_label) [[ "$LANG_CODE" == "ar" ]] && echo "أدخل اسم القسم (اختياري):" || echo "Enter partition label (optional):" ;;
+        not_chosen) [[ "$LANG_CODE" == "ar" ]] && echo "لم يتم اختيار أي عنصر!" || echo "Nothing was selected!" ;;
+        repair_success) [[ "$LANG_CODE" == "ar" ]] && echo "تم الإصلاح بنجاح، لم يتم العثور على مشاكل." || echo "Repair successful, no problems found." ;;
+        check_success) [[ "$LANG_CODE" == "ar" ]] && echo "تم الفحص بنجاح، لم يتم العثور على مشاكل." || echo "Check successful, no problems found." ;;
+        lang_switch) [[ "$LANG_CODE" == "ar" ]] && echo "تغيير اللغة" || echo "Change Language" ;;
+        about_title) [[ "$LANG_CODE" == "ar" ]] && echo "حول البرنامج" || echo "About" ;;
+        about_text)
+            if [[ "$LANG_CODE" == "ar" ]]; then
+                echo "<b>$APP_NAME</b>
+الإصدار: $VERSION
+
+<b>المطور:</b> $AUTHOR
+
+<b>المستودع:</b>
+<a href=\"$REPO_URL\">$REPO_URL</a>
+
+<b>الرخصة:</b> $LICENSE
+
+<b>الوصف:</b>
+أداة رسومية متقدمة للفحص والإصلاح والتهيئة والإنقاذ للأقراص الخارجية."
+            else
+                echo "<b>$APP_NAME</b>
+Version: $VERSION
+
+<b>Author:</b> $AUTHOR
+
+<b>Repository:</b>
+<a href=\"$REPO_URL\">$REPO_URL</a>
+
+<b>License:</b> $LICENSE
+
+<b>Description:</b>
+A graphical tool for checking, repairing, formatting, and rescuing USB/SD external drives only."
+            fi
+            ;;
+        quit) [[ "$LANG_CODE" == "ar" ]] && echo "خروج" || echo "Quit" ;;
+        choose_dev) [[ "$LANG_CODE" == "ar" ]] && echo "اختيار نوع الجهاز" || echo "Choose Device Type" ;;
+        *) echo "$1" ;;
+    esac
+}
+
+choose_fsck_mode() {
+    zenity --list --title="$(msg choose_check_mode)" \
+      --column="النمط" --column="الوصف" \
+      "-y" "$( [[ "$LANG_CODE" == "ar" ]] && echo "إصلاح تلقائي لكل الأعطال (مقترح)" || echo "Automatic repair for all errors (recommended)" )" \
+      "-n" "$( [[ "$LANG_CODE" == "ar" ]] && echo "فحص فقط بدون إصلاح" || echo "Check only, no repair" )" \
+      --width=500 --height=180
+}
+choose_repair_mode() {
+    zenity --list --title="$(msg choose_repair_mode)" \
+      --column="النمط" --column="الوصف" \
+      "-y" "$( [[ "$LANG_CODE" == "ar" ]] && echo "إصلاح تلقائي لكل الأعطال (مقترح)" || echo "Automatic repair for all errors (recommended)" )" \
+      "-n" "$( [[ "$LANG_CODE" == "ar" ]] && echo "فحص فقط بدون إصلاح" || echo "Check only, no repair" )" \
+      --width=500 --height=180
+}
+choose_fs_type() {
+    zenity --list --title="$(msg choose_fs_type)" --column="$(msg choose_fs_type)" "ext4" "vfat" "ntfs" "exfat" --width=350 --height=250
+}
+about_dialog() {
+    zenity --info --title="$(msg about_title)" --width=500 --height=350 --text="$(msg about_text)"
+}
+
+REQUIRED_TOOLS=("zenity" "lsblk" "pkexec" "blkid" "smartctl")
+MISSING_TOOLS=()
+for tool in "${REQUIRED_TOOLS[@]}"; do
+    if ! command -v "$tool" >/dev/null 2>&1; then
+        MISSING_TOOLS+=("$tool")
+    fi
+done
+if [ ${#MISSING_TOOLS[@]} -gt 0 ]; then
+    zenity --error --text="$(msg missing_tools "${MISSING_TOOLS[*]}")"
+    exit 1
+fi
+
+choose_language
+
+get_external_disks() {
+    lsblk -ndo NAME,TYPE,MODEL,SIZE | awk '
+        $2=="disk" && $1!="sda" {
+            printf("/dev/%s [%s, %s]\n", $1, ($3==""?"Unknown":$3), $4)
+        }
+    '
+}
+get_partitions_of_disk() {
+    local disk="$1"
+    lsblk -lno NAME,SIZE,FSTYPE,LABEL,TYPE "$disk" | awk '$5 == "part" { printf("/dev/%s (%s, %s, %s)\n", $1, $2, $3, $4) }'
+}
+
+try_smartctl() {
+    local diskdev="$1"
+    local output devtype
+    output=$(pkexec smartctl -a "$diskdev" 2>&1)
+    if echo "$output" | grep -q "Unknown USB bridge\|Please specify device type"; then
+        while true; do
+            devtype=$(zenity --list --title="$(msg choose_dev)" \
+                --text="$(msg smart_choose_type)" \
+                --column="نوع الجهاز" "sat" "scsi" "usbjmicron" "usbcypress" "test" --width=400 --height=250)
+            [ -z "$devtype" ] && return
+            output=$(pkexec smartctl -a -d "$devtype" "$diskdev" 2>&1)
+            if echo "$output" | grep -q "Please specify device type\|Unknown USB bridge"; then
+                zenity --question --text="$(msg smart_try_again $devtype)"
+                [ $? -eq 0 ] || return
+            else
+                zenity --text-info --title="$(msg smart_result)" --width=800 --height=500 --filename=<(echo "$output")
+                return
+            fi
+        done
+    else
+        zenity --text-info --title="$(msg smart_result)" --width=800 --height=500 --filename=<(echo "$output")
+    fi
+}
+
+while true; do
+    action=$(zenity --list --title="$(msg app_title)" \
+        --column="العملية" --column="الوصف" \
+        "disklist" "$( [[ "$LANG_CODE" == "ar" ]] && echo "عرض جميع الأجهزة الخارجية" || echo "Show all external disks" )" \
+        "smart" "$( [[ "$LANG_CODE" == "ar" ]] && echo "فحص الصحة (SMART)" || echo "Check SMART health" )" \
+        "check" "$( [[ "$LANG_CODE" == "ar" ]] && echo "فحص قسم/جهاز" || echo "Check device or partition" )" \
+        "repair" "$( [[ "$LANG_CODE" == "ar" ]] && echo "إصلاح قسم/جهاز" || echo "Repair device or partition" )" \
+        "format" "$( [[ "$LANG_CODE" == "ar" ]] && echo "تهيئة قسم أو الجهاز بالكامل" || echo "Format partition or whole device" )" \
+        "lang" "$(msg lang_switch)" \
+        "about" "$( [[ "$LANG_CODE" == "ar" ]] && echo "حول البرنامج" || echo "About" )" \
+        "quit" "$(msg quit)" \
+        --width=530 --height=420)
+
+    case "$action" in
+        "disklist")
+            info=$(lsblk -o NAME,SIZE,TYPE,FSTYPE,LABEL,MOUNTPOINT,MODEL,TRAN)
+            zenity --text-info --title="$(msg device_info)" --width=800 --height=450 --filename=<(echo "$info")
+            ;;
+        "smart")
+            mapfile -t disks < <(get_external_disks)
+            if [ ${#disks[@]} -eq 0 ]; then
+                zenity --error --text="$(msg no_ext_devs)"
+                continue
+            fi
+            disk=$(zenity --list --title="$(msg choose_disk)" --column="$(msg devices_col)" "${disks[@]}" --width=500 --height=280)
+            diskdev=$(echo "$disk" | awk -F' ' '{print $1}')
+            [ -z "$diskdev" ] && continue
+            try_smartctl "$diskdev"
+            ;;
+        "check"|"repair")
+            mapfile -t disks < <(get_external_disks)
+            if [ ${#disks[@]} -eq 0 ]; then
+                zenity --error --text="$(msg no_ext_devs)"
+                continue
+            fi
+            disk=$(zenity --list --title="$(msg choose_disk)" --column="$(msg devices_col)" "${disks[@]}" --width=500 --height=280)
+            diskdev=$(echo "$disk" | awk -F' ' '{print $1}')
+            [ -z "$diskdev" ] && continue
+            mapfile -t parts < <(get_partitions_of_disk "$diskdev")
+            targets=("$diskdev ($( [[ "$LANG_CODE" == "ar" ]] && echo "الجهاز بالكامل" || echo "Whole Device" )) )")
+            for p in "${parts[@]}"; do
+                targets+=("$p")
+            done
+            target=$(zenity --list --title="$(msg choose_target)" --column="$(msg targets_col)" "${targets[@]}" --width=500 --height=280)
+            targetdev=$(echo "$target" | awk '{print $1}')
+            [ -z "$targetdev" ] && continue
+            if [ "$action" = "check" ]; then
+                fsck_mode=$(choose_fsck_mode)
+                fsck_mode=$(echo "$fsck_mode" | awk '{print $1}')
+                if [ -z "$fsck_mode" ]; then
+                    zenity --warning --text="$(msg not_chosen)"
+                    continue
+                fi
+                result=$(pkexec fsck $fsck_mode "$targetdev" 2>&1)
+                if [ -z "$result" ]; then
+                    zenity --info --title="$(msg fsck_result)" --text="$(msg check_success)"
+                else
+                    zenity --text-info --title="$(msg fsck_result)" --width=800 --height=500 --filename=<(echo "$result")
+                fi
+            elif [ "$action" = "repair" ]; then
+                repair_mode=$(choose_repair_mode)
+                repair_mode=$(echo "$repair_mode" | awk '{print $1}')
+                if [ -z "$repair_mode" ]; then
+                    zenity --warning --text="$(msg not_chosen)"
+                    continue
+                fi
+                zenity --question --text="$(msg confirm_repair "$targetdev")"
+                [ $? -eq 0 ] || continue
+                result=$(pkexec fsck $repair_mode "$targetdev" 2>&1)
+                if [ -z "$result" ]; then
+                    zenity --info --title="$(msg repair_result)" --text="$(msg repair_success)"
+                else
+                    zenity --text-info --title="$(msg repair_result)" --width=800 --height=500 --filename=<(echo "$result")
+                fi
+            fi
+            ;;
+        "format")
+            mapfile -t disks < <(get_external_disks)
+            if [ ${#disks[@]} -eq 0 ]; then
+                zenity --error --text="$(msg no_ext_devs)"
+                continue
+            fi
+            disk=$(zenity --list --title="$(msg choose_disk)" --column="$(msg devices_col)" "${disks[@]}" --width=500 --height=280)
+            diskdev=$(echo "$disk" | awk -F' ' '{print $1}')
+            [ -z "$diskdev" ] && continue
+            mapfile -t parts < <(get_partitions_of_disk "$diskdev")
+            format_targets=("$diskdev ($( [[ "$LANG_CODE" == "ar" ]] && echo "الجهاز بالكامل" || echo "Whole Device" )) )")
+            for p in "${parts[@]}"; do
+                format_targets+=("$p")
+            done
+            format_target=$(zenity --list --title="$(msg choose_full_format)" --column="$(msg targets_col)" "${format_targets[@]}" --width=600 --height=280)
+            format_dev=$(echo "$format_target" | awk '{print $1}')
+            [ -z "$format_dev" ] && continue
+            fs=$(choose_fs_type)
+            [ -z "$fs" ] && continue
+            label=$(zenity --entry --title="$(msg entry_label)" --text="$(msg entry_label)")
+            if [[ "$format_dev" == "$diskdev" ]]; then
+                zenity --warning --text="$(msg confirm_full_format "$format_dev")"
+                zenity --question --text="$(msg confirm_full_format "$format_dev")"
+                [ $? -eq 0 ] || continue
+            else
+                zenity --warning --text="$(msg confirm_format "$format_dev")"
+                zenity --question --text="$(msg confirm_format "$format_dev" "$fs")"
+                [ $? -eq 0 ] || continue
+            fi
+            if [ "$fs" = "vfat" ]; then
+                pkexec mkfs.vfat -F 32 -n "$label" "$format_dev" 2>&1 | tee /tmp/format.log
+            elif [ "$fs" = "ntfs" ]; then
+                pkexec mkfs.ntfs -f -L "$label" "$format_dev" 2>&1 | tee /tmp/format.log
+            elif [ "$fs" = "exfat" ]; then
+                pkexec mkfs.exfat -n "$label" "$format_dev" 2>&1 | tee /tmp/format.log
+            else
+                pkexec mkfs.ext4 -L "$label" "$format_dev" 2>&1 | tee /tmp/format.log
+            fi
+            zenity --text-info --title="$(msg format_result)" --width=800 --height=500 --filename=/tmp/format.log
+            ;;
+        "lang") choose_language ;;
+        "about") about_dialog ;;
+        "quit"|*) break ;;
+    esac
+done

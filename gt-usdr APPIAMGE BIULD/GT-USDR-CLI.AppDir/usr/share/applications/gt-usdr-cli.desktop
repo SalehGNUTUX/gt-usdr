@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=GT-USDR-CLI
+Name[ar]=غنوتوكس-إنقاذ-ذاكرة-التخزين (طرفية)
+Comment=GNUTUX USB/SD Disk Rescue (Command Line Version)
+Comment[ar]=أداة جنوتوكس لإنقاذ أقراص USB/SD (نسخة طرفية)
+Exec=gt-usdr-cli
+Icon=gt-usdr-cli-icon
+Terminal=true
+Categories=System;Utility;
+Keywords=usb;sd;rescue;disk;cli;gnutux;terminal;
+Keywords[ar]=يو إس بي;إس دي;إنقاذ;قرص;طرفية;غنوتوكس;

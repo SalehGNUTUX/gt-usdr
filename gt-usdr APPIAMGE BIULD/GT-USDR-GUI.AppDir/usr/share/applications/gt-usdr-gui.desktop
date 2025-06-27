@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=GT-USDR-GUI
+Name[ar]=جي تي-يو إس دي آر (واجهة رسومية)
+Comment=GNUTUX USB/SD Disk Rescue (Graphical Version)
+Comment[ar]=أداة غنوتوكس لإنقاذ وحدة التخزين USB/SD (نسخة رسومية)
+Exec=gt-usdr-gui
+Icon=gt-usdr-gui-icon
+Terminal=false
+Categories=Utility;System;
+Keywords=usb;sd;rescue;disk;gui;gnutux;graphical;
+Keywords[ar]=يو إس بي;إس دي;إنقاذ;قرص;رسومي;غنوتوكس;

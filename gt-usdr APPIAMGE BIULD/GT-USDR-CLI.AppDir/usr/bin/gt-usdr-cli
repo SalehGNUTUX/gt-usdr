@@ -1,0 +1,337 @@
+#!/bin/bash
+
+APP_NAME="GT-USDR"
+VERSION="1.0"
+AUTHOR="GNUTUX"
+
+LANGUAGE="ar"
+
+choose_language() {
+    clear
+    show_logo
+    echo "Select language / اختر اللغة:"
+    echo "1) English"
+    echo "2) العربية"
+    read -p "> " lang_choice
+    case $lang_choice in
+        1) LANGUAGE="en";;
+        2) LANGUAGE="ar";;
+        *) LANGUAGE="ar";;
+    esac
+}
+
+t() {
+    case $LANGUAGE in
+        ar)
+            case $1 in
+                WELCOME) echo "مرحبًا بك في $APP_NAME $VERSION";;
+                INTRO) echo "🧩 أداة متقدمة لفحص، إصلاح، تهيئة، وإنقاذ مفاتيح وبطاقات الذاكرة الخارجية (USB/SD)";;
+                SELECT_DISK) echo "🔌 اختر رقم الجهاز الخارجي (أو 0 للخروج):";;
+                SELECT_TARGET) echo "اختر القسم أو الجهاز بالكامل:";;
+                INVALID_CHOICE) echo "❎ خيار غير صحيح";;
+                MAIN_MENU) echo "📋 القائمة الرئيسية";;
+                DEVICE_INFO) echo "🔎 معلومات الجهاز/القسم";;
+                CHECK) echo "🩺 فحص";;
+                REPAIR) echo "🛠️ إصلاح";;
+                BADBLOCKS) echo "🚧 فحص القطاعات التالفة";;
+                SMART) echo "💡 فحص الصحة (SMART)";;
+                BACKUP) echo "💾 نسخ احتياطي";;
+                FORMAT) echo "🧹 تهيئة";;
+                EXIT_MENU) echo "🔙 تغيير الجهاز/القسم";;
+                QUIT) echo "🚪 خروج";;
+                SUCC) echo "✅ تمت العملية بنجاح!";;
+                MISSING_DEP) echo "❗ الأداة أو الحزمة المطلوبة غير متوفرة: $2
+➡️ الرجاء تثبيت الحزمة: $3
+"; t ENTER_TO_CONTINUE;;
+                PRESS_ENTER) read -p "↩️ اضغط Enter للمتابعة...";;
+                NO_DEVICE) echo "❌ لا توجد أجهزة خارجية متصلة!";;
+                NO_PARTS) echo "❌ لا توجد أقسام متاحة!";;
+                EXIT_THANKS) echo "شكراً لاستخدام $APP_NAME!";;
+                CHOOSE_FS) echo "اختر نظام الملفات:" && echo "1) FAT32" && echo "2) exFAT" && echo "3) NTFS" && echo "4) ext4";;
+                CONFIRM_FORMAT) read -p "هل أنت متأكد من التهيئة؟ (y/N): " confirm;;
+                BACK) echo "🔙 عودة";;
+                CHOOSE_DEVTYPE) echo "اختر نوع الجهاز:";;
+                SMART_MENU) echo "خيارات الصحة (SMART):";;
+                SMART_INFO) echo "عرض معلومات SMART";;
+                SMART_SHORT) echo "تشغيل اختبار قصير";;
+                SMART_LONG) echo "تشغيل اختبار طويل";;
+                SMART_LOG) echo "عرض سجل الاختبارات";;
+                SMART_CUSTOM_TYPE) echo "خيارات نوع الجهاز";;
+                WHOLE_DEVICE) echo "الجهاز بالكامل";;
+                NO_PART_OR_WHOLE) echo "❌ لا توجد أقسام متاحة على الجهاز المحدد!";;
+                *) echo "$1";;
+            esac
+            ;;
+        en|*)
+            case $1 in
+                WELCOME) echo "Welcome to $APP_NAME $VERSION";;
+                INTRO) echo "🧩 Advanced tool for checking, repairing, formatting, and rescuing USB/SD storage devices";;
+                SELECT_DISK) echo "🔌 Enter the external device number (or 0 to exit):";;
+                SELECT_TARGET) echo "Choose partition or whole device:";;
+                INVALID_CHOICE) echo "❎ Invalid choice";;
+                MAIN_MENU) echo "📋 Main Menu";;
+                DEVICE_INFO) echo "🔎 Device/Partition Information";;
+                CHECK) echo "🩺 Check";;
+                REPAIR) echo "🛠️ Repair";;
+                BADBLOCKS) echo "🚧 Badblocks Scan";;
+                SMART) echo "💡 Health check (SMART)";;
+                BACKUP) echo "💾 Backup";;
+                FORMAT) echo "🧹 Format";;
+                EXIT_MENU) echo "🔙 Change Device/Partition";;
+                QUIT) echo "🚪 Exit";;
+                SUCC) echo "✅ Operation completed successfully!";;
+                MISSING_DEP) echo "❗ Required tool or package is missing: $2
+➡️ Please install the package: $3
+"; t ENTER_TO_CONTINUE;;
+                PRESS_ENTER) read -p "↩️ Press Enter to continue...";;
+                NO_DEVICE) echo "❌ No external devices connected!";;
+                NO_PARTS) echo "❌ No partitions available!";;
+                EXIT_THANKS) echo "Thank you for using $APP_NAME!";;
+                CHOOSE_FS) echo "Choose file system type:" && echo "1) FAT32" && echo "2) exFAT" && echo "3) NTFS" && echo "4) ext4";;
+                CONFIRM_FORMAT) read -p "Are you sure you want to format? (y/N): " confirm;;
+                BACK) echo "🔙 Back";;
+                CHOOSE_DEVTYPE) echo "Choose device type:";;
+                SMART_MENU) echo "SMART Health Options:";;
+                SMART_INFO) echo "Show SMART info";;
+                SMART_SHORT) echo "Run short test";;
+                SMART_LONG) echo "Run long test";;
+                SMART_LOG) echo "Show SMART test log";;
+                SMART_CUSTOM_TYPE) echo "Device type options";;
+                WHOLE_DEVICE) echo "Whole Device";;
+                NO_PART_OR_WHOLE) echo "❌ No partitions available on selected device!";;
+                *) echo "$1";;
+            esac
+            ;;
+    esac
+}
+
+check_dep() {
+    if ! command -v "$1" &>/dev/null; then
+        t MISSING_DEP "$1" "$2"
+        return 1
+    fi
+    return 0
+}
+
+show_logo() {
+    echo -e "\e[32m"
+    echo "________________   _____  ________________________ "
+    echo "__  ____/__  __/   __  / / /_  ___/__  __ \\__  __ \\"
+    echo "_  / __ __  /_______  / / /_____ \\__  / / /_  /_/ /"
+    echo "/ /_/ / _  /_/_____/ /_/ / ____/ /_  /_/ /_  _, _/ "
+    echo "\\____/  /_/        \\____/  /____/ /_____/ /_/ |_|  "
+    echo "                                                   "
+    echo -e "   🚀 $APP_NAME $VERSION by $AUTHOR"
+    t INTRO
+    echo
+}
+
+list_external_disks() {
+    # يعرض فقط الأقراص الخارجية من نوع disk (usb/mmc)
+    lsblk -ndo NAME,TYPE,SIZE,TRAN | awk '$2=="disk" && ($4=="usb" || $4=="mmc") {printf "/dev/%s [%s]\n", $1, $3}'
+}
+
+list_partitions_of_disk() {
+    local disk="$1"
+    # يعرض جميع الأقسام التابعة للقرص المحدد
+    lsblk -lno NAME,SIZE,FSTYPE,LABEL,TYPE "$disk" | awk '$5=="part" { printf "/dev/%s (%s, %s, %s)\n", $1, $2, $3, $4 }'
+}
+
+choose_disk_and_target() {
+    while true; do
+        clear
+        show_logo
+        mapfile -t DISKS < <(list_external_disks)
+        [ ${#DISKS[@]} -eq 0 ] && t NO_DEVICE && t PRESS_ENTER && exit 1
+        echo "== $(t SELECT_DISK) =="
+        for idx in "${!DISKS[@]}"; do
+            echo "$((idx+1)). ${DISKS[$idx]}"
+        done
+        echo "0. $(t QUIT)"
+        t SELECT_DISK
+        read -p "> " disknum
+        if [[ "$disknum" == "0" ]]; then
+            clear; show_logo; t EXIT_THANKS; exit 0
+        elif [[ "$disknum" =~ ^[0-9]+$ ]] && (( disknum >= 1 && disknum <= ${#DISKS[@]} )); then
+            DISKDEV=$(echo "${DISKS[$((disknum-1))]}" | awk '{print $1}')
+            break
+        else
+            t INVALID_CHOICE; t PRESS_ENTER
+        fi
+    done
+
+    # جلب الأقسام التابعة للقرص المختار
+    while true; do
+        clear
+        show_logo
+        mapfile -t PARTS < <(list_partitions_of_disk "$DISKDEV")
+        TARGETS=()
+        TARGETS+=("$DISKDEV ($(t WHOLE_DEVICE))")
+        for p in "${PARTS[@]}"; do
+            TARGETS+=("$p")
+        done
+        if [ ${#TARGETS[@]} -eq 0 ]; then
+            t NO_PART_OR_WHOLE; t PRESS_ENTER
+            return 1
+        fi
+        echo "== $(t SELECT_TARGET) =="
+        for idx in "${!TARGETS[@]}"; do
+            echo "$((idx+1)). ${TARGETS[$idx]}"
+        done
+        echo "0. $(t BACK)"
+        read -p "> " targetnum
+        if [[ "$targetnum" == "0" ]]; then
+            return 1
+        elif [[ "$targetnum" =~ ^[0-9]+$ ]] && (( targetnum >= 1 && targetnum <= ${#TARGETS[@]} )); then
+            TARGETDEV=$(echo "${TARGETS[$((targetnum-1))]}" | awk '{print $1}')
+            return 0
+        else
+            t INVALID_CHOICE; t PRESS_ENTER
+        fi
+    done
+}
+
+show_device_info() {
+    check_dep lsblk util-linux || return
+    check_dep blkid util-linux || return
+    lsblk -f "$TARGETDEV"
+    blkid "$TARGETDEV"
+    t PRESS_ENTER
+}
+
+check_device() {
+    check_dep fsck util-linux || return
+    sudo fsck -n "$TARGETDEV"
+    t PRESS_ENTER
+}
+
+repair_device() {
+    check_dep fsck util-linux || return
+    sudo fsck -y "$TARGETDEV"
+    t PRESS_ENTER
+}
+
+badblocks_scan() {
+    check_dep badblocks e2fsprogs || return
+    sudo badblocks -v "$TARGETDEV"
+    t PRESS_ENTER
+}
+
+smart_menu() {
+    check_dep smartctl smartmontools || return
+    while true; do
+        clear
+        show_logo
+        echo "=== $(t SMART_MENU) ==="
+        echo "1) $(t SMART_INFO)"
+        echo "2) $(t SMART_SHORT)"
+        echo "3) $(t SMART_LONG)"
+        echo "4) $(t SMART_LOG)"
+        echo "5) $(t SMART_CUSTOM_TYPE)"
+        echo "0) $(t BACK)"
+        read -p "> " smart_opt
+        case $smart_opt in
+            1) sudo smartctl -a "$TARGETDEV";;
+            2) sudo smartctl -t short "$TARGETDEV"; echo "Short test started. Run option 4 to see results.";;
+            3) sudo smartctl -t long "$TARGETDEV"; echo "Long test started. Run option 4 to see results.";;
+            4) sudo smartctl -l selftest "$TARGETDEV";;
+            5)
+                t CHOOSE_DEVTYPE
+                PS3="$(t CHOOSE_DEVTYPE) #: "
+                select devtype in "sat" "scsi" "usbjmicron" "usbcypress" "test" "$(t BACK)"; do
+                    case $devtype in
+                        sat|scsi|usbjmicron|usbcypress|test)
+                            echo "Selected: $devtype"
+                            sudo smartctl -d "$devtype" -a "$TARGETDEV"
+                            break
+                            ;;
+                        "$(t BACK)") break ;;
+                        *) t INVALID_CHOICE;;
+                    esac
+                done
+                ;;
+            0) break;;
+            *) t INVALID_CHOICE; t PRESS_ENTER ;;
+        esac
+        t PRESS_ENTER
+    done
+}
+
+backup_device() {
+    check_dep dd coreutils || return
+    backupfile=~/backup-$(basename "$TARGETDEV")-$(date +%Y%m%d%H%M%S).img
+    sudo dd if="$TARGETDEV" of="$backupfile" bs=4M status=progress
+    echo "Backup saved to: $backupfile"
+    t PRESS_ENTER
+}
+
+format_device() {
+    t CHOOSE_FS
+    read -p "> " fs_choice
+    case $fs_choice in
+        1) FS_TYPE="vfat";;
+        2) FS_TYPE="exfat";;
+        3) FS_TYPE="ntfs";;
+        4) FS_TYPE="ext4";;
+        *) t INVALID_CHOICE; return;;
+    esac
+    t CONFIRM_FORMAT
+    [[ "$confirm" != "y" && "$confirm" != "Y" ]] && return
+    sudo umount "$TARGETDEV" 2>/dev/null
+    case $FS_TYPE in
+        vfat)
+            check_dep mkfs.vfat dosfstools || return
+            sudo mkfs.vfat -F 32 "$TARGETDEV"
+            ;;
+        exfat)
+            check_dep mkfs.exfat exfatprogs || return
+            sudo mkfs.exfat "$TARGETDEV"
+            ;;
+        ntfs)
+            check_dep mkfs.ntfs ntfs-3g || return
+            sudo mkfs.ntfs -f "$TARGETDEV"
+            ;;
+        ext4)
+            check_dep mkfs.ext4 e2fsprogs || return
+            sudo mkfs.ext4 "$TARGETDEV"
+            ;;
+    esac
+    t SUCC
+    t PRESS_ENTER
+}
+
+main_menu() {
+    while true; do
+        if ! choose_disk_and_target; then continue; fi
+        while true; do
+            clear
+            show_logo
+            echo -e "\e[44;97m$(t MAIN_MENU)\e[0m"
+            echo "1. $(t DEVICE_INFO)"
+            echo "2. $(t CHECK)"
+            echo "3. $(t REPAIR)"
+            echo "4. $(t BADBLOCKS)"
+            echo "5. $(t SMART)"
+            echo "6. $(t BACKUP)"
+            echo "7. $(t FORMAT)"
+            echo "8. $(t EXIT_MENU)"
+            echo "0. $(t QUIT)"
+            read -p "> " opt
+            case $opt in
+                1) show_device_info ;;
+                2) check_device ;;
+                3) repair_device ;;
+                4) badblocks_scan ;;
+                5) smart_menu ;;
+                6) backup_device ;;
+                7) format_device ;;
+                8) break ;;
+                0) clear; show_logo; t EXIT_THANKS; exit 0 ;;
+                *) t INVALID_CHOICE; t PRESS_ENTER ;;
+            esac
+        done
+    done
+}
+
+choose_language
+main_menu
